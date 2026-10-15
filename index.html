@@ -481,10 +481,10 @@
                     <canvas id="mazeCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing touch-none z-10"></canvas>
                     
                     <!-- Highly Visible Dynamic Speech Cards -->
-                    <div id="dialogBrekhna" class="absolute z-30 hidden bg-gradient-to-r from-rose-600 to-pink-600 text-white px-4 py-2 rounded-2xl shadow-2xl text-xs sm:text-sm font-extrabold border-2 border-amber-300 animate-bounce pointer-events-none transition-all">
+                    <div id="dialogBrekhna" class="absolute z-30 hidden bg-gradient-to-r from-rose-600 to-pink-600 text-white px-4 py-2.5 rounded-2xl shadow-2xl text-xs sm:text-sm font-extrabold border-2 border-amber-300 animate-bounce pointer-events-none transition-all whitespace-nowrap min-w-[130px] text-center">
                         Don't leave, okiee? 🥺
                     </div>
-                    <div id="dialogArsalan" class="absolute z-30 hidden bg-gradient-to-r from-amber-400 to-yellow-300 text-rose-950 px-4 py-2 rounded-2xl shadow-2xl text-xs sm:text-sm font-extrabold border-2 border-white animate-bounce pointer-events-none transition-all" style="animation-delay: 0.15s;">
+                    <div id="dialogArsalan" class="absolute z-30 hidden bg-gradient-to-r from-amber-400 to-yellow-300 text-rose-950 px-4 py-2.5 rounded-2xl shadow-2xl text-xs sm:text-sm font-extrabold border-2 border-white animate-bounce pointer-events-none transition-all whitespace-nowrap min-w-[130px] text-center" style="animation-delay: 0.15s;">
                         I won't... Ever! ❤️
                     </div>
 
@@ -1063,12 +1063,45 @@
                 dBrekhna.classList.remove('hidden');
                 dArsalan.classList.remove('hidden');
 
-                // Position speech bubbles perfectly near avatars
-                dBrekhna.style.left = `${Math.max(10, brekhnaObj.x - 60)}px`;
-                dBrekhna.style.top = `${Math.max(10, brekhnaObj.y - 65)}px`;
+                // Better non-overlapping positioning:
+                // Brekhna bubble → above-left of her
+                // Arsalan bubble → above-right of him
+                // Extra vertical offset so they never stack
+                const bubbleW = 140;
+                const bubbleH = 40;
 
-                dArsalan.style.left = `${Math.min(mCanvas.width - 130, arsalanObj.x - 60)}px`;
-                dArsalan.style.top = `${Math.max(10, arsalanObj.y - 65)}px`;
+                let bLeft = Math.max(8, Math.min(mCanvas.width - bubbleW - 8, brekhnaObj.x - 70));
+                let bTop  = Math.max(8, brekhnaObj.y - 80);
+
+                let aLeft = Math.max(8, Math.min(mCanvas.width - bubbleW - 8, arsalanObj.x - 50));
+                let aTop  = Math.max(8, arsalanObj.y - 80);
+
+                // If they would overlap vertically, push one higher / lower
+                if (Math.abs(bTop - aTop) < 50) {
+                    if (brekhnaObj.y <= arsalanObj.y) {
+                        bTop = Math.max(8, bTop - 45);
+                        aTop = Math.min(mCanvas.height - bubbleH - 8, aTop + 10);
+                    } else {
+                        aTop = Math.max(8, aTop - 45);
+                        bTop = Math.min(mCanvas.height - bubbleH - 8, bTop + 10);
+                    }
+                }
+
+                // Horizontal separation if still too close
+                if (Math.abs(bLeft - aLeft) < 100) {
+                    if (brekhnaObj.x <= arsalanObj.x) {
+                        bLeft = Math.max(8, bLeft - 30);
+                        aLeft = Math.min(mCanvas.width - bubbleW - 8, aLeft + 30);
+                    } else {
+                        aLeft = Math.max(8, aLeft - 30);
+                        bLeft = Math.min(mCanvas.width - bubbleW - 8, bLeft + 30);
+                    }
+                }
+
+                dBrekhna.style.left = `${bLeft}px`;
+                dBrekhna.style.top  = `${bTop}px`;
+                dArsalan.style.left = `${aLeft}px`;
+                dArsalan.style.top  = `${aTop}px`;
 
                 // Initial Heart Confetti
                 confetti({
@@ -1088,12 +1121,17 @@
                     });
                 }, 1800);
 
-                // Show Permanent Victory Overlay Banner
+                // Keep speech bubbles visible for 5 full seconds, then show the love page
                 setTimeout(() => {
+                    // Hide the speech bubbles cleanly
+                    dBrekhna.classList.add('hidden');
+                    dArsalan.classList.add('hidden');
+
+                    // Show Permanent Victory Overlay Banner
                     const victoryEl = document.getElementById('victoryOverlay');
                     victoryEl.classList.remove('hidden');
                     victoryEl.classList.add('flex');
-                }, 1400);
+                }, 5000);
             }
 
             drawAvatar(arsalanObj, "Arsalan 👑", "#fbcfe8", isMazeWon);
